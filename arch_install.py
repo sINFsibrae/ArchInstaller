@@ -179,7 +179,7 @@ def install():
 	subprocess.call('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist', shell=True)
 	subprocess.call('pacstrap %s base base-devel tmux vim' % install_path, shell=True)
 
-	subprocess.call(['cp', '/etc/pacman.conf', '/tmp/'], stdout=subprocess.PIPE)
+	subprocess.call('cp /etc/pacman.conf /tmp/', shell=True)
 	file = open('/tmp/pacman.conf', 'a')
 	file.write('[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch')
 	file.close()
@@ -190,7 +190,7 @@ def install():
 	for program in programs_to_install:
 		programs += ' ' + program
 	print(programs)
-	run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
+	# run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
 
 	file = open(install_path + '/etc/hostname', 'w')
 	file.write(input('Please insert hostname:'))
