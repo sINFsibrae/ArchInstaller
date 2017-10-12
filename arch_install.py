@@ -168,14 +168,14 @@ def install():
 		out = subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE)
 		out = out.stdout.readline()
 		print(out)
-		if out == 'ls: cannot access \'/sys/firmware/efi/efivars\': No such file or directory':
+		if out.count('No such file or directory') > 1:
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
-	subprocess.call('echo dhcpd', shell=True)
+	subprocess.call('dhcpd', shell=True)
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
 
-	subprocess.call('echo pacstrap base base-devel tmux vim', shell=True)
+	subprocess.call('pacstrap base base-devel tmux vim', shell=True)
 
 	subprocess.call(['cp', '/etc/pacman.conf', '/tmp/'], stdout=subprocess.PIPE)
 	file = open('/tmp/pacman.conf', 'a')
@@ -184,13 +184,13 @@ def install():
 	file.write('Server = http://repo.archlinux.fr/$arch')
 	file.close()
 
-	subprocess.call('echo pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path, shell=True)
+	subprocess.call('pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path, shell=True)
 
 	programs = ''
 	for program in programs_to_install:
 		programs += ' ' + program
 	print(programs)
-	run_chroot_command('echo yaourt --noconfirm -Sayu %s' % programs)
+	run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
 
 	file = open(install_path + '/etc/hostname', 'w')
 	file.write(input('Please insert hostname:'))
