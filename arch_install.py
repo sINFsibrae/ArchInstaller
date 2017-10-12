@@ -6,10 +6,14 @@ import subprocess
 import sys
 
 main_menu_points = ['Add WIFI', 'Add Office', 'Add Dev Tools', 'Configure Remote Help', 'DO IT!!!']
-dev_tools = ['jdk8-openjdk', 'jdk9-openjdk', 'jdk', 'jetbrains-toolbox', 'Back..']
+dev_tools = ['jdk8-openjdk', 'jdk9-openjdk', 'jdk', 'jetbrains-toolbox']
+
+gnome = []
+gnome_extra = []
+
 added_menu_points = []
 
-programs_to_install = ['tmux', 'htop', 'vim', 'grub']
+programs_to_install = ['htop', 'grub']
 
 # Settings
 install_path = None
@@ -63,17 +67,18 @@ def remove_programs(programs_to_remove):
 		programs_to_install.remove(program)
 
 
-def choose_dev_tools():
-	choice = ask_for_choice(dev_tools)
+def choose_options(menu_points):
+	menu_points.append('Back..')
+	choice = ask_for_choice(menu_points)
 
-	if dev_tools[choice] == "Back..":
+	if menu_points[choice] == 'Back..':
 		print_menu_points(main_menu_points)
 		return
 
-	elif added_menu_points.count(dev_tools[choice]) == 0:
-		print('Adding %s...' % dev_tools[choice])
-		added_menu_points.append(dev_tools[choice])
-		add_programs([dev_tools[choice]])
+	elif added_menu_points.count(menu_points[choice]) == 0:
+		print('Adding %s...' % menu_points[choice])
+		added_menu_points.append(menu_points[choice])
+		add_programs([menu_points[choice]])
 
 	else:
 		print('%s already added!' % dev_tools[choice])
@@ -82,7 +87,13 @@ def choose_dev_tools():
 			added_menu_points.remove(dev_tools[choice])
 			remove_programs([dev_tools[choice]])
 
-	choose_dev_tools()
+	menu_points.remove('Back..')
+	choose_options(menu_points)
+
+
+def option_menu(menu_points):
+	print_menu_points(menu_points)
+	choose_options(menu_points)
 
 
 def choose_menu_options():
@@ -123,8 +134,7 @@ def choose_menu_options():
 		choose_menu_options()
 
 	elif choice == main_menu_points.index('Add Dev Tools'):
-		print_menu_points(dev_tools)
-		choose_dev_tools()
+		option_menu(dev_tools)
 
 		choose_menu_options()
 
@@ -151,22 +161,40 @@ def choose_menu_options():
 		choose_menu_options()
 
 
-def check_efi():
-	proc = subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE)
-	return proc != 'ls: cannot access \'/sys/firmware/efi/efivars\': No such file or directory'
-
-
 def install():
-	print(3 * '\n' + 'Installing...')
-
-	subprocess.call("echo loadkeys de-latin1", shell=True)
+	print(2 * '\n' + 'Installing...\n')
 
 	if efi_install:
-		if not check_efi():
+		out = subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE)
+		out = out.stdout.readline()
+		print(out)
+		if out == 'ls: cannot access \'/sys/firmware/efi/efivars\': No such file or directory':
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
-	subprocess.call("echo pacstrap base base-devel tmux vim htop", shell=True)
+	subprocess.call('echo dhcpd', shell=True)
+	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
+
+	subprocess.call('echo pacstrap base base-devel tmux vim', shell=True)
+
+	subprocess.call(['cp', '/etc/pacman.conf', '/tmp/'], stdout=subprocess.PIPE)
+	file = open('/tmp/pacman.conf', 'a')
+	file.write('[archlinuxfr]')
+	file.write('SigLevel = Never')
+	file.write('Server = http://repo.archlinux.fr/$arch')
+	file.close()
+
+	subprocess.call('echo pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path, shell=True)
+
+	programs = ''
+	for program in programs_to_install:
+		programs += ' ' + program
+	print(programs)
+	run_chroot_command('echo yaourt --noconfirm -Sayu %s' % programs)
+
+
+def run_chroot_command(command):
+	subprocess.call('chroot ' + install_path + ' ' + command, shell=True)
 
 
 def usage():
@@ -181,6 +209,8 @@ def usage():
 
 
 def main():
+	subprocess.call('echo loadkeys de-latin1', shell=True)
+
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], 'ehv', ['efi-install', 'help', 'version'])
 	except getopt.GetoptError as e:
