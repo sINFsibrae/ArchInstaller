@@ -172,6 +172,7 @@ def install():
 	subprocess.call('dhcpcd', shell=True)
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
 
+	subprocess.call('wget "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"', shell=True)
 	subprocess.call('rankmirrors -n 16 /etc/pacman.d/mirrorlist > /etc/pacman.d/mirrorlist', shell=True)
 	subprocess.call('pacstrap %s base base-devel tmux vim' % install_path, shell=True)
 
