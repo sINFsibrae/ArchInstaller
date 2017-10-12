@@ -2,18 +2,22 @@
 # arch_install
 
 import getopt
+import subprocess
 import sys
 
-main_menu_points = ['Add Office', 'Add Dev Tools', 'Configure Remote Help', 'DO IT!!!']
+main_menu_points = ['Add WIFI', 'Add Office', 'Add Dev Tools', 'Configure Remote Help', 'DO IT!!!']
 dev_tools = ['jdk8-openjdk', 'jdk9-openjdk', 'jdk', 'jetbrains-toolbox', 'Back..']
 added_menu_points = []
 
 programs_to_install = ['tmux', 'htop', 'vim', 'grub']
 
+# Settings
 install_path = None
 efi_install = False
 
+# Errors
 ERR_NO_INSTALL_PATH = 2
+ERR_SYS_NOT_EFI = 3
 ERR_WRONG_ARGUMENT_OPTION = 10
 
 
@@ -84,7 +88,24 @@ def choose_dev_tools():
 def choose_menu_options():
 	choice = ask_for_choice(main_menu_points)
 
-	if choice == main_menu_points.index('Add Office'):
+	if choice == main_menu_points.index('Add WIFI'):
+		wifi_tools = ['iw', 'wireless_tools', 'wpa_supplicant', 'wifi-menu', 'dialog']
+
+		if added_menu_points.count(main_menu_points[choice]) == 0:
+			print('Adding %s...' % main_menu_points[choice])
+			added_menu_points.append(main_menu_points[choice])
+			add_programs(wifi_tools)
+
+		else:
+			print('%s already set!' % main_menu_points[choice])
+			if ask_for_continue('Remove?', False):
+				print('Removing %s...' % main_menu_points[choice])
+				added_menu_points.remove(main_menu_points[choice])
+				remove_programs(wifi_tools)
+
+		choose_menu_options()
+
+	elif choice == main_menu_points.index('Add Office'):
 		office_programs = ['libreoffice-fresh', 'libreoffice-fresh-de']
 
 		if added_menu_points.count(main_menu_points[choice]) == 0:
@@ -93,7 +114,7 @@ def choose_menu_options():
 			add_programs(office_programs)
 
 		else:
-			print('%s already added!' % main_menu_points[choice])
+			print('%s already set!' % main_menu_points[choice])
 			if ask_for_continue('Remove?', False):
 				print('Removing %s...' % main_menu_points[choice])
 				added_menu_points.remove(main_menu_points[choice])
@@ -122,16 +143,30 @@ def choose_menu_options():
 		choose_menu_options()
 
 	elif choice == main_menu_points.index('DO IT!!!'):
-		print('DONE')
 		print(programs_to_install)
+		install()
 
 	else:
 		print('No such option available.')
 		choose_menu_options()
 
 
+def check_efi():
+	proc = subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE)
+	return proc != 'ls: cannot access \'/sys/firmware/efi/efivars\': No such file or directory'
+
+
 def install():
 	print(3 * '\n' + 'Installing...')
+
+	subprocess.call("echo loadkeys de-latin1", shell=True)
+
+	if efi_install:
+		if not check_efi():
+			print('System is not booted in EFI-mode!')
+			sys.exit(ERR_SYS_NOT_EFI)
+
+	subprocess.call("echo pacstrap base base-devel tmux vim htop", shell=True)
 
 
 def usage():
