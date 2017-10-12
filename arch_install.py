@@ -166,7 +166,7 @@ def install():
 
 	if efi_install:
 		out = subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE)
-		if out.stdout.readline().__contains__('No such file or directory'):
+		if out.returncode != 0:
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
