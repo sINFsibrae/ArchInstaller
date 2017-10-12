@@ -192,6 +192,10 @@ def install():
 	print(programs)
 	run_chroot_command('echo yaourt --noconfirm -Sayu %s' % programs)
 
+	file = open(install_path + '/etc/hostname', 'w')
+	file.write(input('Please insert hostname:'))
+	file.close()
+
 
 def run_chroot_command(command):
 	subprocess.call('chroot ' + install_path + ' ' + command, shell=True)
@@ -209,8 +213,6 @@ def usage():
 
 
 def main():
-	subprocess.call('echo loadkeys de-latin1', shell=True)
-
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], 'ehv', ['efi-install', 'help', 'version'])
 	except getopt.GetoptError as e:
