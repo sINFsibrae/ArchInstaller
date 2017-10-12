@@ -165,15 +165,15 @@ def install():
 	print(2 * '\n' + 'Installing...\n')
 
 	if efi_install:
-		out = subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE)
-		if out.returncode != 0:
+		if subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE).returncode != 0:
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
-	subprocess.call('dhcpd', shell=True)
+	subprocess.call('dhcpcd', shell=True)
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
 
-	subprocess.call('pacstrap base base-devel tmux vim', shell=True)
+	subprocess.call('rankmirrors -n 16 /etc/pacman.d/mirrorlist > /etc/pacman.d/mirrorlist', shell=True)
+	subprocess.call('pacstrap %s base base-devel tmux vim' % install_path, shell=True)
 
 	subprocess.call(['cp', '/etc/pacman.conf', '/tmp/'], stdout=subprocess.PIPE)
 	file = open('/tmp/pacman.conf', 'a')
