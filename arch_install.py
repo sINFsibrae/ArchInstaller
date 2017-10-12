@@ -175,6 +175,7 @@ def install():
 	subprocess.call(
 		'wget -O /tmp/mirrorlist "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"',
 		shell=True)
+	subprocess.call('sed -i \'s/^#Server/Server/\' /etc/pacman.d/mirrorlist.backup', shell=True)
 	subprocess.call('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist', shell=True)
 	subprocess.call('pacstrap %s base base-devel tmux vim' % install_path, shell=True)
 
