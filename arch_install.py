@@ -13,7 +13,7 @@ programs_to_install = ['tmux', 'htop', 'vim', 'grub']
 install_path = None
 efi_install = False
 
-ERR_NO_INSTALL_PATH = 1
+ERR_NO_INSTALL_PATH = 2
 ERR_WRONG_ARGUMENT_OPTION = 10
 
 
@@ -174,6 +174,7 @@ def main():
 		elif o in ('-e', '--efi-install'):
 			global efi_install
 			efi_install = True
+			add_programs(['efibootmgr'])
 
 		else:
 			assert False, 'unhandled option'
