@@ -180,9 +180,7 @@ def install():
 
 	subprocess.call(['cp', '/etc/pacman.conf', '/tmp/'], stdout=subprocess.PIPE)
 	file = open('/tmp/pacman.conf', 'a')
-	file.write('[archlinuxfr]')
-	file.write('SigLevel = Never')
-	file.write('Server = http://repo.archlinux.fr/$arch')
+	file.write('[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch')
 	file.close()
 
 	subprocess.call('pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path, shell=True)
