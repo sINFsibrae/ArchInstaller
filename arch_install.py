@@ -51,8 +51,8 @@ def ask_for_choice(points):
 	return choice
 
 
-def print_menu_points(points):
-	print('Menu')
+def print_menu_points(points, message):
+	print(message)
 	for i in range(points.__len__()):
 		print('%i) %s' % (i + 1, points[i]))
 
@@ -72,7 +72,7 @@ def choose_options(menu_points):
 	choice = ask_for_choice(menu_points)
 
 	if menu_points[choice] == 'Back..':
-		print_menu_points(main_menu_points)
+		option_menu(main_menu_points)
 		return
 
 	elif added_menu_points.count(menu_points[choice]) == 0:
@@ -92,7 +92,7 @@ def choose_options(menu_points):
 
 
 def option_menu(menu_points):
-	print_menu_points(menu_points)
+	print_menu_points(menu_points, 'Menu')
 	choose_options(menu_points)
 
 
@@ -161,6 +161,20 @@ def choose_menu_options():
 		choose_menu_options()
 
 
+def ask_for_keyboardlayout():
+	keyboardlayouts = ['de-latin1-nodeadkeys']
+	keyboardlayouts.append('Input own layout..')
+
+	print_menu_points(keyboardlayouts, 'Keyboardlayout')
+	choice = ask_for_choice(keyboardlayouts)
+
+	if keyboardlayouts[choice] == 'Input own layout..':
+		return input('Insert Layout')
+	else:
+		return keyboardlayouts[choice]
+
+
+
 def install():
 	print(2 * '\n' + 'Installing...\n')
 
@@ -176,8 +190,11 @@ def install():
 		'wget -O /tmp/mirrorlist "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"',
 		shell=True)
 	subprocess.call('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist', shell=True)
+	print('Ranking mirrors...')
 	subprocess.call('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist', shell=True)
 	subprocess.call('pacstrap %s base base-devel tmux vim' % install_path, shell=True)
+
+	subprocess.call('genfstab -U %s >> %s/etc/fstab' % install_path, shell=True)
 
 	subprocess.call('cp /etc/pacman.conf /tmp/', shell=True)
 	file = open('/tmp/pacman.conf', 'a')
@@ -190,11 +207,37 @@ def install():
 	for program in programs_to_install:
 		programs += ' ' + program
 	print(programs)
-	# run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
+	run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
 
-	file = open(install_path + '/etc/hostname', 'w')
-	file.write(input('Please insert hostname:'))
+	localtime = 'Europe/Berlin'
+	subprocess.call('ln -sf /usr/share/zoneinfo/%s /etc/localtime' % localtime)
+
+	subprocess.call('hwclock --localtime --systohc', shell=True)
+
+	editor = 'vim '
+	input('Uncomment needed localizations in /etc/locale.gen..')
+	subprocess.call('%s/etc/locale.gen' % editor + install_path, shell=True)
+	subprocess.call('locale-gen', shell=True)
+
+	user_input = input('Please insert localazation:')
+	file = open(install_path + '/etc/locale.conf', 'w')
+	file.write('LANG=' + user_input)
 	file.close()
+
+	user_input = input('Please insert hostname:')
+	file = open(install_path + '/etc/hostname', 'w')
+	file.write(user_input)
+	file.close()
+
+	user_input = ask_for_keyboardlayout()
+	file = open(install_path + '/etc/vconsole.conf', 'w')
+	file.write('KEYMAP=%s' % user_input)
+	file.close()
+
+	subprocess.call('mkinitcpio -p linux', shell=True)
+
+	print('Insert root password:')
+	subprocess.call('passwd', shell=True)
 
 
 def run_chroot_command(command):
@@ -213,6 +256,7 @@ def usage():
 
 
 def main():
+	subprocess.call('timedatectl set-ntp true', shell=True)
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], 'ehv', ['efi-install', 'help', 'version'])
 	except getopt.GetoptError as e:
