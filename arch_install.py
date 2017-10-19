@@ -5,11 +5,21 @@ import getopt
 import subprocess
 import sys
 
-main_menu_points = ['Add WIFI', 'Add Office', 'Add Dev Tools', 'Configure Remote Help', 'DO IT!!!']
+main_menu_points = ['Add WIFI', 'Add Office', 'Add Dev Tools', 'Gnome', 'Configure Remote Help', 'DO IT!!!']
 dev_tools = ['jdk8-openjdk', 'jdk9-openjdk', 'jdk', 'jetbrains-toolbox']
 
-gnome = []
-gnome_extra = []
+gnome = ['adwaita-icon-theme', 'baobab', 'empathy', 'eog', 'evince', 'gdm', 'gnome-backgrounds', 'gnome-calculator',
+		 'gnome-contacts', 'gnome-control-center', 'gnome-dictionary', 'gnome-disk-utility', 'gnome-font-viewer',
+		 'gnome-keyring', 'gnome-screenshot', 'gnome-session', 'gnome-settings-daemon', 'gnome-shell',
+		 'gnome-shell-extensions', 'gnome-system-monitor', 'gnome-terminal', 'gnome-themes-standard', 'gnome-user-docs',
+		 'gnome-user-share', 'grilo-plugins', 'gtk3-print-backends', 'gucharmap', 'gvfs', 'gvfs-afc', 'gvfs-goa',
+		 'gvfs-google', 'gvfs-gphoto2', 'gvfs-mtp', 'gvfs-nfs', 'gvfs-smb', 'mousetweaks', 'mutter', 'nautilus',
+		 'networkmanager', 'sushi', 'tracker', 'tracker-miners', 'vino', 'xdg-user-dirs-gtk', 'yelp']
+gnome_extra = ['gnome-initial-setup', 'bijiben', 'brasero', 'cheese', 'dconf-editor', 'evolution', 'file-roller',
+			   'gedit', 'gedit-code-assistance', 'gnome-calendar', 'gnome-characters', 'gnome-clocks',
+			   'gnome-color-manager', 'gnome-documents', 'gnome-getting-started-docs', 'gnome-logs', 'gnome-nettool',
+			   'gnome-photos', 'gnome-todo', 'gnome-tweak-tool', 'gnome-weather', 'nautilus-sendto', 'polari', 'rygel',
+			   'seahorse', 'vinagre']
 
 added_menu_points = []
 
@@ -27,11 +37,11 @@ ERR_WRONG_ARGUMENT_OPTION = 10
 
 def ask_for_continue(prompt, default_yes):
 	if default_yes:
-		user_input = input(prompt + ' [Y/n] ')
+		user_input = input(prompt + ' [Y/n]')
 		if user_input in ('Y', 'y', ''):
 			return True
 	else:
-		user_input = input(prompt + ' [y/N] ')
+		user_input = input(prompt + ' [y/N]')
 		if user_input in ('N', 'n', ''):
 			return False
 		else:
@@ -91,8 +101,8 @@ def choose_options(menu_points):
 	choose_options(menu_points)
 
 
-def option_menu(menu_points):
-	print_menu_points(menu_points, 'Menu')
+def option_menu(menu_points, prompt):
+	print_menu_points(menu_points, prompt)
 	choose_options(menu_points)
 
 
@@ -134,7 +144,22 @@ def choose_menu_options():
 		choose_menu_options()
 
 	elif choice == main_menu_points.index('Add Dev Tools'):
-		option_menu(dev_tools)
+		option_menu(dev_tools, 'Dev Tools')
+
+		choose_menu_options()
+
+	elif choice == main_menu_points.index('Gnome'):
+		add_programs(gnome)
+		add_programs(gnome_extra)
+
+		for program in gnome:
+			added_menu_points.append(program)
+
+		for program in gnome_extra:
+			added_menu_points.append(program)
+
+		option_menu(gnome, 'Gnome\nremove components')
+		option_menu(gnome_extra, 'Extras\nremove components')
 
 		choose_menu_options()
 
@@ -161,18 +186,16 @@ def choose_menu_options():
 		choose_menu_options()
 
 
-def ask_for_keyboardlayout():
-	keyboardlayouts = ['de-latin1-nodeadkeys']
-	keyboardlayouts.append('Input own layout..')
+def get_choice(choices, prompt):
+	choices.append('Input own value..')
 
-	print_menu_points(keyboardlayouts, 'Keyboardlayout')
-	choice = ask_for_choice(keyboardlayouts)
+	print_menu_points(choices, prompt)
+	choice = ask_for_choice(choices)
 
-	if keyboardlayouts[choice] == 'Input own layout..':
-		return input('Insert Layout')
+	if choices[choice] == 'Input own value..':
+		return input('Insert value')
 	else:
-		return keyboardlayouts[choice]
-
+		return choices[choice]
 
 
 def install():
@@ -209,8 +232,8 @@ def install():
 	print(programs)
 	run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
 
-	localtime = 'Europe/Berlin'
-	subprocess.call('ln -sf /usr/share/zoneinfo/%s /etc/localtime' % localtime)
+	localtime = ['Europe/Berlin']
+	subprocess.call('ln -sf /usr/share/zoneinfo/%s /etc/localtime' % get_choice(localtime, 'Localtime'))
 
 	subprocess.call('hwclock --localtime --systohc', shell=True)
 
@@ -229,7 +252,8 @@ def install():
 	file.write(user_input)
 	file.close()
 
-	user_input = ask_for_keyboardlayout()
+	keyboardlayout = ['de-latin1-nodeadkeys']
+	user_input = get_choice(keyboardlayout, 'Keyboardlayout')
 	file = open(install_path + '/etc/vconsole.conf', 'w')
 	file.write('KEYMAP=%s' % user_input)
 	file.close()
@@ -290,7 +314,7 @@ def main():
 		else:
 			assert False, 'unhandled option'
 
-	print_menu_points(main_menu_points)
+	print_menu_points(main_menu_points, 'Main Menu')
 	choose_menu_options()
 
 
