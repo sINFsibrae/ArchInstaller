@@ -28,6 +28,7 @@ programs_to_install = ['htop', 'grub']
 # Settings
 install_path = None
 efi_install = False
+editor = 'vim '
 
 # Errors
 ERR_NO_INSTALL_PATH = 2
@@ -159,7 +160,7 @@ def choose_menu_options():
 			added_menu_points.append(program)
 
 		option_menu(gnome, 'Gnome\nremove components')
-		option_menu(gnome_extra, 'Extras\nremove components')
+		option_menu(gnome_extra, 'Gnome Extras\nremove components')
 
 		choose_menu_options()
 
@@ -198,6 +199,30 @@ def get_choice(choices, prompt):
 		return choices[choice]
 
 
+def run_command(command):
+	subprocess.call(command, shell=True)
+
+
+def edit_other_files():
+	b_continue = ask_for_continue('Do you want to edit some other files?', True)
+
+	while b_continue:
+		path = input('Specify path')
+		run_command('%s%s/%s' % editor % install_path % path)
+		b_continue = ask_for_continue('Do you want to edit some other files?', True)
+
+
+def install_bootloader():
+	command = 'grub-install --target='
+	if efi_install:
+		command.join('x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux')
+	else:
+		command.join('i386-pc')
+
+	run_chroot_command(command)
+	run_chroot_command('grub-mkconfig -o /boot/grub/grub.cfg')
+
+
 def install():
 	print(2 * '\n' + 'Installing...\n')
 
@@ -206,25 +231,24 @@ def install():
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
-	subprocess.call('dhcpcd', shell=True)
+	run_command('dhcpcd')
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
 
-	subprocess.call(
-		'wget -O /tmp/mirrorlist "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"',
-		shell=True)
-	subprocess.call('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist', shell=True)
+	run_command(
+		'wget -O /tmp/mirrorlist "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"')
+	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
-	subprocess.call('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist', shell=True)
-	subprocess.call('pacstrap %s base base-devel tmux vim' % install_path, shell=True)
+	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
+	run_command('pacstrap %s base base-devel tmux vim' % install_path)
 
-	subprocess.call('genfstab -U %s >> %s/etc/fstab' % install_path, shell=True)
+	run_command('genfstab -U %s >> %s/etc/fstab' % install_path)
 
-	subprocess.call('cp /etc/pacman.conf /tmp/', shell=True)
+	run_command('cp /etc/pacman.conf /tmp/')
 	file = open('/tmp/pacman.conf', 'a')
 	file.write('[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch')
 	file.close()
 
-	subprocess.call('pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path, shell=True)
+	run_command('pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path)
 
 	programs = ''
 	for program in programs_to_install:
@@ -233,14 +257,13 @@ def install():
 	run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
 
 	localtime = ['Europe/Berlin']
-	subprocess.call('ln -sf /usr/share/zoneinfo/%s /etc/localtime' % get_choice(localtime, 'Localtime'))
+	run_command('ln -sf /usr/share/zoneinfo/%s /etc/localtime' % get_choice(localtime, 'Localtime'))
 
-	subprocess.call('hwclock --localtime --systohc', shell=True)
+	run_command('hwclock --localtime --systohc')
 
-	editor = 'vim '
 	input('Uncomment needed localizations in /etc/locale.gen..')
-	subprocess.call('%s/etc/locale.gen' % editor + install_path, shell=True)
-	subprocess.call('locale-gen', shell=True)
+	run_command('%s/etc/locale.gen' % editor + install_path)
+	run_command('locale-gen')
 
 	user_input = input('Please insert localazation:')
 	file = open(install_path + '/etc/locale.conf', 'w')
@@ -258,14 +281,18 @@ def install():
 	file.write('KEYMAP=%s' % user_input)
 	file.close()
 
-	subprocess.call('mkinitcpio -p linux', shell=True)
+	edit_other_files()
+
+	run_chroot_command('mkinitcpio -p linux')
+
+	install_bootloader()
 
 	print('Insert root password:')
-	subprocess.call('passwd', shell=True)
+	run_chroot_command('passwd')
 
 
 def run_chroot_command(command):
-	subprocess.call('chroot ' + install_path + ' ' + command, shell=True)
+	run_command('chroot ' + install_path + ' ' + command)
 
 
 def usage():
