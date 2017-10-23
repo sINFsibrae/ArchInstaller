@@ -79,11 +79,11 @@ def remove_programs(programs_to_remove):
 
 
 def choose_options(menu_points):
-	menu_points.append('Back..')
 	choice = ask_for_choice(menu_points)
 
 	if menu_points[choice] == 'Back..':
-		option_menu(main_menu_points)
+		print_menu_points(main_menu_points, 'Main Menu')
+		choose_menu_options()
 		return
 
 	elif added_menu_points.count(menu_points[choice]) == 0:
@@ -98,13 +98,14 @@ def choose_options(menu_points):
 			added_menu_points.remove(dev_tools[choice])
 			remove_programs([dev_tools[choice]])
 
-	menu_points.remove('Back..')
 	choose_options(menu_points)
 
 
 def option_menu(menu_points, prompt):
+	menu_points.append('Back..')
 	print_menu_points(menu_points, prompt)
 	choose_options(menu_points)
+	menu_points.remove('Back..')
 
 
 def choose_menu_options():
