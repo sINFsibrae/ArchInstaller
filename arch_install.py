@@ -242,7 +242,7 @@ def install():
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
 	run_command('pacstrap %s base base-devel tmux vim' % install_path)
 
-	run_command('genfstab -U %s >> %s/etc/fstab' % install_path)
+	run_command('genfstab -U %s >> %s/etc/fstab' % install_path % install_path)
 
 	run_command('cp /etc/pacman.conf /tmp/')
 	file = open('/tmp/pacman.conf', 'a')
