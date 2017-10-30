@@ -204,13 +204,9 @@ def run_command(command):
 	subprocess.call(command, shell=True)
 
 
-def edit_other_files():
-	b_continue = ask_for_continue('Do you want to edit some other files?', True)
-
-	while b_continue:
-		path = input('Specify path')
-		run_command('{0}{1}/{2}'.format(editor, install_path, path))
-		b_continue = ask_for_continue('Do you want to edit some other files?', True)
+def run_more_commands():
+	if ask_for_continue('Do you want to run custom commands before the installation finishes?', True):
+		run_command('/bin/zsh')
 
 
 def install_bootloader():
@@ -288,7 +284,7 @@ def install():
 	file.write('KEYMAP={}'.format(user_input))
 	file.close()
 
-	edit_other_files()
+	run_more_commands()
 
 	run_chroot_command('mkinitcpio -p linux')
 
