@@ -228,11 +228,6 @@ def install():
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
-	run_command('mount -B /proc {}/mnt/proc'.format(install_path))
-	run_command('mount -B /sys {}/mnt/sys'.format(install_path))
-	run_command('mount -B /run {}/mnt/run'.format(install_path))
-	run_command('mount -B /dev {}/mnt/dev'.format(install_path))
-
 	run_command('dhcpcd')
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
 
@@ -243,6 +238,11 @@ def install():
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
 	run_command('cat /etc/pacman.d/mirrorlist > {}/etc/pacman.d/mirrorlist'.format(install_path))
 	run_command('pacstrap {} base base-devel tmux vim'.format(install_path))
+
+	run_command('mount -B /proc {}/mnt/proc'.format(install_path))
+	run_command('mount -B /sys {}/mnt/sys'.format(install_path))
+	run_command('mount -B /run {}/mnt/run'.format(install_path))
+	run_command('mount -B /dev {}/mnt/dev'.format(install_path))
 
 	run_command('genfstab -U {0} >> {0}/etc/fstab'.format(install_path))
 
