@@ -241,7 +241,8 @@ def install():
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	run_command('cp /etc/pacman.d/mirrorlist {}//etc/pacman.d/mirrorlist'.format(install_path))
+	run_command('rm {}/etc/pacman.d/mirrorlist'.format(install_path))
+	run_command('cp /etc/pacman.d/mirrorlist {}/etc/pacman.d/mirrorlist'.format(install_path))
 	run_command('pacstrap {} base base-devel tmux vim'.format(install_path))
 
 	run_command('genfstab -U {0} >> {0}/etc/fstab'.format(install_path))
