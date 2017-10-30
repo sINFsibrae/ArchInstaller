@@ -231,7 +231,7 @@ def install():
 	run_command('mount -B /proc {}/mnt/proc'.format(install_path))
 	run_command('mount -B /sys {}/mnt/sys'.format(install_path))
 	run_command('mount -B /run {}/mnt/run'.format(install_path))
-	run_command('mount -B /dev {}/mnt/dev'.format(install_path))/main_menu_points
+	run_command('mount -B /dev {}/mnt/dev'.format(install_path))
 
 	run_command('dhcpcd')
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
