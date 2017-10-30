@@ -5,6 +5,17 @@ import getopt
 import subprocess
 import sys
 
+# Settings
+install_path = None
+efi_install = False
+editor = 'vim '
+
+# Errors
+ERR_NO_INSTALL_PATH = 2
+ERR_SYS_NOT_EFI = 3
+ERR_WRONG_ARGUMENT_OPTION = 10
+
+# Programs
 main_menu_points = ['Add WIFI', 'Add Office', 'Add Dev Tools', 'Gnome', 'Configure Remote Help', 'DO IT!!!']
 dev_tools = ['jdk8-openjdk', 'jdk9-openjdk', 'jdk', 'jetbrains-toolbox']
 
@@ -24,16 +35,6 @@ gnome_extra = ['gnome-initial-setup', 'bijiben', 'brasero', 'cheese', 'dconf-edi
 added_menu_points = []
 
 programs_to_install = ['htop', 'grub']
-
-# Settings
-install_path = None
-efi_install = False
-editor = 'vim '
-
-# Errors
-ERR_NO_INSTALL_PATH = 2
-ERR_SYS_NOT_EFI = 3
-ERR_WRONG_ARGUMENT_OPTION = 10
 
 
 def ask_for_continue(prompt, default_yes):
