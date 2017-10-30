@@ -210,7 +210,7 @@ def edit_other_files():
 
 	while b_continue:
 		path = input('Specify path')
-		run_command('%s%s/%s' % editor % install_path % path)
+		run_command('{0}{1}/{2}'.format(editor, install_path, path))
 		b_continue = ask_for_continue('Do you want to edit some other files?', True)
 
 
@@ -241,7 +241,7 @@ def install():
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	run_command('pacstrap %s base base-devel tmux vim' % install_path)
+	run_command('pacstrap {} base base-devel tmux vim'.format(install_path))
 
 	run_command('genfstab -U {0} >> {0}/etc/fstab'.format(install_path))
 
@@ -250,21 +250,21 @@ def install():
 	file.write('[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch')
 	file.close()
 
-	run_command('pacman --config /tmp/pacman.conf -r %s -Sy yaourt' % install_path)
+	run_command('pacman --config /tmp/pacman.conf -r {} -Sy yaourt'.format(install_path))
 
 	programs = ''
 	for program in programs_to_install:
 		programs += ' ' + program
 	print(programs)
-	run_chroot_command('yaourt --noconfirm -Sayu %s' % programs)
+	run_chroot_command('yaourt --noconfirm -Sayu {}'.format(programs))
 
 	localtime = ['Europe/Berlin']
-	run_command('ln -sf /usr/share/zoneinfo/%s /etc/localtime' % get_choice(localtime, 'Localtime'))
+	run_command('ln -sf /usr/share/zoneinfo/{} /etc/localtime'.format(get_choice(localtime, 'Localtime')))
 
 	run_command('hwclock --localtime --systohc')
 
-	input('Uncomment needed localizations in /etc/locale.gen..')
-	run_command('%s/etc/locale.gen' % editor + install_path)
+	input('Uncomment needed localizations in /etc/locale.gen.. (Press "Enter")')
+	run_command('{}/etc/locale.gen'.format(editor + install_path))
 	run_command('locale-gen')
 
 	user_input = input('Please insert localazation:')
@@ -280,7 +280,7 @@ def install():
 	keyboardlayout = ['de-latin1-nodeadkeys']
 	user_input = get_choice(keyboardlayout, 'Keyboardlayout')
 	file = open(install_path + '/etc/vconsole.conf', 'w')
-	file.write('KEYMAP=%s' % user_input)
+	file.write('KEYMAP={}'.format(user_input))
 	file.close()
 
 	edit_other_files()
