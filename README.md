@@ -12,3 +12,7 @@ I'm providing this tool primarily for me and my friends, so it supports only 64-
 systems and there are only german configuration options by now.
 
 Note: The "Configure Remote Help" menu-option is only available to us.
+
+## Usage
+Download the Python file via "http://tinyurl.com/crapArchInst", make it executable
+and execute it.
