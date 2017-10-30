@@ -298,7 +298,7 @@ def run_chroot_command(command):
 
 def usage():
 	print('usage: arch-install [OPTION] <install-path>')
-	print('Convenient way to install Arch Linux. Must run on Arch Linux live USB!\n')
+	print('Convenient way to install Arch Linux. Must run in Arch Linux install environment!\n')
 
 	print('  -e, --efi-install')
 	print('  -h, --help')
