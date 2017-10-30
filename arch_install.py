@@ -232,10 +232,10 @@ def install():
 			print('System is not booted in EFI-mode!')
 			sys.exit(ERR_SYS_NOT_EFI)
 
-	run_command('mount -b /proc {}/mnt/proc'.format(install_path))
-	run_command('mount -b /sys {}/mnt/sys'.format(install_path))
-	run_command('mount -b /run {}/mnt/run'.format(install_path))
-	run_command('mount -b /dev {}/mnt/dev'.format(install_path))
+	run_command('mount -B /proc {}/mnt/proc'.format(install_path))
+	run_command('mount -B /sys {}/mnt/sys'.format(install_path))
+	run_command('mount -B /run {}/mnt/run'.format(install_path))
+	run_command('mount -B /dev {}/mnt/dev'.format(install_path))/main_menu_points
 
 	run_command('dhcpcd')
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
