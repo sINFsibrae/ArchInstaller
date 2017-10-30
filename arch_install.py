@@ -285,6 +285,7 @@ def install():
 
 	edit_other_files()
 
+	run_command("mount -b /proc {}/mnt/proc".format(install_path))
 	run_chroot_command('mkinitcpio -p linux')
 
 	install_bootloader()

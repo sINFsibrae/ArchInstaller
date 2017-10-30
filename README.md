@@ -14,5 +14,5 @@ systems and there are only german configuration options by now.
 Note: The "Configure Remote Help" menu-option is only available to us.
 
 ## Usage
-Download the Python file via "http://tinyurl.com/crapArchInst", make it executable
+Download the Python file via "<http://tinyurl.com/crapArchInst>", make it executable
 and execute it.
