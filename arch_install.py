@@ -38,9 +38,9 @@ added_menu_points = []
 programs_to_install = ['tmux', 'htop', 'grub']
 
 
-def exit(promt, status):
+def exit_with_message(promt, status):
 	print(promt)
-	sys.exit(status)
+	exit(status)
 
 
 def exit(status):
@@ -261,7 +261,7 @@ def install():
 
 	if efi_install:
 		if subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE).returncode != 0:
-			exit('System is not booted in EFI-mode!', ERR_SYS_NOT_EFI)
+			exit_with_message('System is not booted in EFI-mode!', ERR_SYS_NOT_EFI)
 
 	run_command('dhcpcd')
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
@@ -273,7 +273,7 @@ def install():
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
 	if subprocess.Popen(['pacstrap', install_path, 'base', 'base-devel', 'vim'],
 						stdout=subprocess.PIPE).returncode != 0:
-		exit('pacstrap didn\'t run correctly!', ERR_PACSTRAP_FAILED)
+		exit_with_message('pacstrap didn\'t run correctly!', ERR_PACSTRAP_FAILED)
 
 	setup_chroot()
 
