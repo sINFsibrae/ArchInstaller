@@ -35,7 +35,7 @@ gnome_extra = ['gnome-initial-setup', 'bijiben', 'brasero', 'cheese', 'dconf-edi
 
 added_menu_points = []
 
-programs_to_install = ['htop', 'grub']
+programs_to_install = ['tmux', 'htop', 'grub']
 
 
 def exit(promt, status):
@@ -271,7 +271,7 @@ def install():
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	if subprocess.Popen('pacstrap {} base base-devel tmux vim'.format(install_path),
+	if subprocess.Popen(['pacstrap', '{}', 'base', 'base-devel', 'vim'.format(install_path)],
 						stdout=subprocess.PIPE).returncode != 0:
 		exit('pacstrap didn\'t run correctly!', ERR_PACSTRAP_FAILED)
 
