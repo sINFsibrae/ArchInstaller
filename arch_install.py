@@ -8,7 +8,7 @@ import sys
 # Settings
 install_path = None
 efi_install = False
-editor = 'vim '
+editor = None
 
 # Errors
 ERR_NO_INSTALL_PATH = 2
@@ -202,7 +202,7 @@ def choose_menu_options():
 		choose_menu_options()
 
 
-def get_choice(choices, prompt):
+def get_choice(prompt, choices):
 	choices.append('Input own value..')
 
 	print_menu_points(choices, prompt)
@@ -241,7 +241,9 @@ def setup_chroot():
 
 
 def run_more_commands():
-	if ask_for_continue('Do you want to run custom commands before the installation finishes?', True):
+	if ask_for_continue(
+			'Do you want to run custom commands before building the kernel?\nPress Ctrl+D to continue with installation.',
+			True):
 		run_command('/bin/zsh')
 
 
@@ -287,23 +289,29 @@ def install():
 	file.write('[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch')
 	file.close()
 
-	run_command('pacman --config /tmp/pacman.conf -r {} -Sy yaourt'.format(install_path))
+	run_command('pacman --config /tmp/pacman.conf --noconfirm -r {} -Sy yaourt'.format(install_path))
 
 	programs = ''
 	for program in programs_to_install:
 		programs += ' ' + program
-	run_chroot_command('yaourt --noconfirm -Sayu {}'.format(programs))
+	run_chroot_command('yaourt --noconfirm -Sy {}'.format(programs))
 
-	localtime = ['Europe/Berlin']
-	run_command('ln -sf /usr/share/zoneinfo/{} /etc/localtime'.format(get_choice(localtime, 'Localtime')))
+	timezones = ['Europe/Berlin']
+
+	localtime = get_choice('Select timezone:', timezones)
+	run_command('ln -sf /usr/share/zoneinfo/{} /etc/localtime'.format(localtime))
 
 	run_command('hwclock --localtime --systohc')
+
+	editors = ['vi', 'vim', 'nano']
+	global editor
+	editor = get_choice('Select editor:', editors)
 
 	input('Uncomment needed localizations in /etc/locale.gen.. (Press "Enter")')
 	run_command('{}/etc/locale.gen'.format(editor + install_path))
 	run_command('locale-gen')
 
-	user_input = input('Please insert localazation:')
+	user_input = input('Please insert localization:')
 	file = open(install_path + '/etc/locale.conf', 'w')
 	file.write('LANG=' + user_input)
 	file.close()
@@ -314,7 +322,7 @@ def install():
 	file.close()
 
 	keyboardlayout = ['de-latin1-nodeadkeys']
-	user_input = get_choice(keyboardlayout, 'Keyboardlayout')
+	user_input = get_choice('Keyboardlayout', keyboardlayout)
 	file = open(install_path + '/etc/vconsole.conf', 'w')
 	file.write('KEYMAP={}'.format(user_input))
 	file.close()
@@ -327,6 +335,8 @@ def install():
 
 	print('Insert root password:')
 	run_chroot_command('passwd')
+
+	run_command('sync')
 
 	tear_down_chroot()
 
