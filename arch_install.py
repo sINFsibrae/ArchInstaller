@@ -14,6 +14,7 @@ editor = 'vim '
 ERR_NO_INSTALL_PATH = 2
 ERR_SYS_NOT_EFI = 3
 ERR_WRONG_ARGUMENT_OPTION = 10
+ERR_PACSTRAP_FAILED = 11
 
 # Programs
 main_menu_points = ['Add WIFI', 'Add Office', 'Add Dev Tools', 'Gnome', 'Configure Remote Help', 'DO IT!!!']
@@ -35,6 +36,15 @@ gnome_extra = ['gnome-initial-setup', 'bijiben', 'brasero', 'cheese', 'dconf-edi
 added_menu_points = []
 
 programs_to_install = ['htop', 'grub']
+
+
+def exit(promt, status):
+	print(promt)
+	sys.exit(status)
+
+
+def exit(status):
+	sys.exit(status)
 
 
 def ask_for_continue(prompt, default_yes):
@@ -204,6 +214,28 @@ def run_command(command):
 	subprocess.call(command, shell=True)
 
 
+def run_chroot_command(command):
+	run_command('chroot ' + install_path + ' ' + command)
+
+
+def setup_chroot():
+	global mounts
+	run_command('mount proc {}/proc -t proc -o nosuid,noexec,nodev'.format(install_path))
+	run_command('mount sys {}/sys -t sysfs -o nosuid,noexec,nodev,ro'.format(install_path))
+	run_command('mount udev {}/dev -t devtmpfs -o mode=0755,nosuid'.format(install_path))
+	run_command('mount devpts {}/dev/pts -t devpts -o mode=0620,gid=5,nosuid,noexec'.format(install_path))
+	run_command('mount shm {}/dev/shm -t tmpfs -o mode=1777,nosuid,nodev'.format(install_path))
+	run_command('mount run {}/run -t tmpfs -o nosuid,nodev,mode=0755'.format(install_path))
+	run_command('mount tmp {}/tmp -t tmpfs -o mode=1777,strictatime,nodev,nosuid'.format(install_path))
+	run_command('mount -B /etc/resolv.conf {}/etc/resolv.conf'.format(install_path))
+
+	mounts = '{1}/proc {1}/sys {1}/dev {1}/dev/pts {1}/dev/shm {1}/run {1}/tmp'
+
+	if efi_install:
+		run_command('mount efivars {}/sys/firmware/efi/efivars -t efivars -o nosuid,noexec,nodev'.format(install_path))
+		mounts += ' {1}/sys/firmware/efi/efivars'.format(install_path)
+
+
 def run_more_commands():
 	if ask_for_continue('Do you want to run custom commands before the installation finishes?', True):
 		run_command('/bin/zsh')
@@ -220,13 +252,16 @@ def install_bootloader():
 	run_chroot_command('grub-mkconfig -o /boot/grub/grub.cfg')
 
 
+def tear_down_chroot():
+	run_command('umount {}'.format(mounts))
+
+
 def install():
 	print(2 * '\n' + 'Installing...\n')
 
 	if efi_install:
 		if subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE).returncode != 0:
-			print('System is not booted in EFI-mode!')
-			sys.exit(ERR_SYS_NOT_EFI)
+			exit('System is not booted in EFI-mode!', ERR_SYS_NOT_EFI)
 
 	run_command('dhcpcd')
 	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
@@ -236,13 +271,11 @@ def install():
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	run_command('cat /etc/pacman.d/mirrorlist > {}/etc/pacman.d/mirrorlist'.format(install_path))
-	run_command('pacstrap {} base base-devel tmux vim'.format(install_path))
+	if subprocess.Popen('pacstrap {} base base-devel tmux vim'.format(install_path),
+						stdout=subprocess.PIPE).returncode != 0:
+		exit('pacstrap didn\'t run correctly!', ERR_PACSTRAP_FAILED)
 
-	run_command('mount -B /proc {}/mnt/proc'.format(install_path))
-	run_command('mount -B /sys {}/mnt/sys'.format(install_path))
-	run_command('mount -B /run {}/mnt/run'.format(install_path))
-	run_command('mount -B /dev {}/mnt/dev'.format(install_path))
+	setup_chroot()
 
 	run_command('genfstab -U {0} >> {0}/etc/fstab'.format(install_path))
 
@@ -256,7 +289,6 @@ def install():
 	programs = ''
 	for program in programs_to_install:
 		programs += ' ' + program
-	print(programs)
 	run_chroot_command('yaourt --noconfirm -Sayu {}'.format(programs))
 
 	localtime = ['Europe/Berlin']
@@ -293,9 +325,7 @@ def install():
 	print('Insert root password:')
 	run_chroot_command('passwd')
 
-
-def run_chroot_command(command):
-	run_command('chroot ' + install_path + ' ' + command)
+	tear_down_chroot()
 
 
 def usage():
@@ -316,14 +346,14 @@ def main():
 	except getopt.GetoptError as e:
 		print(str(e))
 		usage()
-		sys.exit(ERR_WRONG_ARGUMENT_OPTION)
+		exit(ERR_WRONG_ARGUMENT_OPTION)
 
 	try:
 		args[0]
 	except IndexError as e:
 		print('Please specify installation-path!\n')
 		usage()
-		sys.exit(ERR_NO_INSTALL_PATH)
+		exit(ERR_NO_INSTALL_PATH)
 
 	global install_path
 	install_path = args[0]
@@ -334,7 +364,7 @@ def main():
 
 		elif o in ('-h', '--help'):
 			usage()
-			sys.exit()
+			exit(0)
 
 		elif o in ('-e', '--efi-install'):
 			global efi_install
