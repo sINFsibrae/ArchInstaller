@@ -264,19 +264,18 @@ def install():
 	print(2 * '\n' + 'Installing...\n')
 
 	if efi_install:
-		if subprocess.run('ls /sys/firmware/efi/efivars', stdout=subprocess.PIPE).returncode != 0:
+		if subprocess.run('ls /sys/firmware/efi/efivars').returncode != 0:
 			exit_with_message('System is not booted in EFI-mode!', ERR_SYS_NOT_EFI)
 
-	run_command('dhcpcd')
-	proc = subprocess.run('ping -c 4 google.de', stdout=subprocess.PIPE)
+	# run_command('dhcpcd')
+	# proc = subprocess.run('ping -c 4 google.de', stdout=subprocess.PIPE)
 
 	run_command(
 		'wget -O /tmp/mirrorlist "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"')
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	if subprocess.run('pacstrap {} base base-devel vim'.format(install_path), shell=True,
-						stdout=subprocess.PIPE).returncode != 0:
+	if subprocess.run('pacstrap {} base base-devel vim'.format(install_path), shell=True).returncode != 0:
 		exit_with_message('pacstrap did not run correctly!', ERR_PACSTRAP_FAILED)
 
 	setup_chroot()
