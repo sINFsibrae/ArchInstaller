@@ -233,11 +233,11 @@ def setup_chroot():
 	run_command('mount tmp {}/tmp -t tmpfs -o mode=1777,strictatime,nodev,nosuid'.format(install_path))
 	run_command('mount -B /etc/resolv.conf {}/etc/resolv.conf'.format(install_path))
 
-	mounts = '{1}/proc {1}/sys {1}/dev {1}/dev/pts {1}/dev/shm {1}/run {1}/tmp'
+	mounts = '{0}/proc {0}/sys {0}/dev {0}/dev/pts {0}/dev/shm {0}/run {0}/tmp'.format(install_path)
 
 	if efi_install:
 		run_command('mount efivars {}/sys/firmware/efi/efivars -t efivars -o nosuid,noexec,nodev'.format(install_path))
-		mounts += ' {1}/sys/firmware/efi/efivars'.format(install_path)
+		mounts += ' {}/sys/firmware/efi/efivars'.format(install_path)
 
 
 def run_more_commands():
@@ -264,18 +264,18 @@ def install():
 	print(2 * '\n' + 'Installing...\n')
 
 	if efi_install:
-		if subprocess.Popen(['ls', '/sys/firmware/efi/efivars'], stdout=subprocess.PIPE).returncode != 0:
+		if subprocess.run('ls /sys/firmware/efi/efivars', stdout=subprocess.PIPE).returncode != 0:
 			exit_with_message('System is not booted in EFI-mode!', ERR_SYS_NOT_EFI)
 
 	run_command('dhcpcd')
-	proc = subprocess.Popen(['ping', '-c', '4', 'google.de'], stdout=subprocess.PIPE)
+	proc = subprocess.run('ping -c 4 google.de', stdout=subprocess.PIPE)
 
 	run_command(
 		'wget -O /tmp/mirrorlist "https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4"')
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	if subprocess.Popen(['pacstrap', install_path, 'base', 'base-devel', 'vim'],
+	if subprocess.run('pacstrap {} base base-devel vim'.format(install_path), shell=True,
 						stdout=subprocess.PIPE).returncode != 0:
 		exit_with_message('pacstrap did not run correctly!', ERR_PACSTRAP_FAILED)
 
