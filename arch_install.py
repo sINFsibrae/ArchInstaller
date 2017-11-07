@@ -73,12 +73,6 @@ def ask_for_choice(points):
 	return choice
 
 
-def print_menu_points(points, message):
-	print(message)
-	for i in range(points.__len__()):
-		print('%i) %s' % (i + 1, points[i]))
-
-
 def add_programs(programs_to_add):
 	for program in programs_to_add:
 		programs_to_install.append(program)
@@ -89,13 +83,21 @@ def remove_programs(programs_to_remove):
 		programs_to_install.remove(program)
 
 
+def print_menu_points(points, message):
+	print(message)
+	for i in range(points.__len__()):
+		print('%i) %s' % (i + 1, points[i]))
+
+
 def choose_options(menu_points):
 	choice = ask_for_choice(menu_points)
 
 	if menu_points[choice] == 'Back..':
-		print_menu_points(main_menu_points, 'Main Menu')
-		choose_menu_options()
 		return
+
+	elif choice > menu_points.__len__():
+		print('No such option available.')
+		choose_options(menu_points)
 
 	elif added_menu_points.count(menu_points[choice]) == 0:
 		print('Adding %s...' % menu_points[choice])
@@ -159,6 +161,7 @@ def choose_menu_options():
 	elif choice == main_menu_points.index('Add Dev Tools'):
 		option_menu(dev_tools, 'Dev Tools')
 
+		print_menu_points(main_menu_points, 'Main Menu')
 		choose_menu_options()
 
 	elif choice == main_menu_points.index('Gnome'):
@@ -174,6 +177,7 @@ def choose_menu_options():
 		option_menu(gnome, 'Gnome\nremove components')
 		option_menu(gnome_extra, 'Gnome Extras\nremove components')
 
+		print_menu_points(main_menu_points, 'Main Menu')
 		choose_menu_options()
 
 	elif choice == main_menu_points.index('Configure Remote Help'):
@@ -273,7 +277,7 @@ def install():
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
 	if subprocess.Popen(['pacstrap', install_path, 'base', 'base-devel', 'vim'],
 						stdout=subprocess.PIPE).returncode != 0:
-		exit_with_message('pacstrap didn\'t run correctly!', ERR_PACSTRAP_FAILED)
+		exit_with_message('pacstrap did not run correctly!', ERR_PACSTRAP_FAILED)
 
 	setup_chroot()
 
@@ -373,6 +377,8 @@ def main():
 
 		else:
 			assert False, 'unhandled option'
+
+	print(install_path)
 
 	print_menu_points(main_menu_points, 'Main Menu')
 	choose_menu_options()
