@@ -271,7 +271,7 @@ def install():
 	run_command('sed -i \'s/^#Server/Server/\' /tmp/mirrorlist')
 	print('Ranking mirrors...')
 	run_command('rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist')
-	if subprocess.Popen(['pacstrap', '{}', 'base', 'base-devel', 'vim'.format(install_path)],
+	if subprocess.Popen(['pacstrap', install_path, 'base', 'base-devel', 'vim'],
 						stdout=subprocess.PIPE).returncode != 0:
 		exit('pacstrap didn\'t run correctly!', ERR_PACSTRAP_FAILED)
 
