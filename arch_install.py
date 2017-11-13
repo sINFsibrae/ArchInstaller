@@ -2,9 +2,10 @@
 # arch_install
 
 import getopt
+import math
+import signal
 import subprocess
 import sys
-import math
 
 # Settings
 install_path = None
@@ -280,7 +281,7 @@ def install():
 	print(2 * "\n" + "Installing...\n")
 
 	if efi_install:
-		if subprocess.run("ls /sys/firmware/efi/efivars").returncode != 0:
+		if subprocess.run(["ls", "/sys/firmware/efi/efivars"], stdout=subprocess.PIPE).returncode != 0:
 			exit_with_message("System is not booted in EFI-mode!", ERR_SYS_NOT_EFI)
 
 	# run_command("dhcpcd")
