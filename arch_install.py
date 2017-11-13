@@ -140,7 +140,7 @@ def choose_menu_options():
 	choice = ask_for_choice(main_menu_points)
 
 	if choice == main_menu_points.index("Add WIFI"):
-		wifi_tools = ["iw", "wireless_tools", "wpa_supplicant", "wifi-menu", "dialog"]
+		wifi_tools = ["iw", "wireless_tools", "wpa_supplicant", "dialog"]
 
 		if added_menu_points.count(main_menu_points[choice]) == 0:
 			print("Adding %s..." % main_menu_points[choice])
