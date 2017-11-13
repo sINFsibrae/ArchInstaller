@@ -23,16 +23,16 @@ dev_tools = ["jdk8-openjdk", "jdk9-openjdk", "jdk", "jetbrains-toolbox"]
 
 gnome = ["adwaita-icon-theme", "baobab", "empathy", "eog", "evince", "gdm", "gnome-backgrounds", "gnome-calculator",
 		 "gnome-contacts", "gnome-control-center", "gnome-dictionary", "gnome-disk-utility", "gnome-font-viewer",
-		 "gnome-keyring", "gnome-screenshot", "gnome-session", "gnome-settings-daemon", "gnome-shell",
-		 "gnome-shell-extensions", "gnome-system-monitor", "gnome-terminal", "gnome-themes-standard", "gnome-user-docs",
-		 "gnome-user-share", "grilo-plugins", "gtk3-print-backends", "gucharmap", "gvfs", "gvfs-afc", "gvfs-goa",
-		 "gvfs-google", "gvfs-gphoto2", "gvfs-mtp", "gvfs-nfs", "gvfs-smb", "mousetweaks", "mutter", "nautilus",
-		 "networkmanager", "sushi", "tracker", "tracker-miners", "vino", "xdg-user-dirs-gtk", "yelp"]
+		 "gnome-screenshot", "gnome-session", "gnome-settings-daemon", "gnome-shell", "gnome-shell-extensions",
+		 "gnome-system-monitor", "gnome-terminal", "gnome-themes-standard", "gnome-user-docs", "gnome-user-share",
+		 "grilo-plugins", "gtk3-print-backends", "gucharmap", "gvfs", "gvfs-afc", "gvfs-goa", "gvfs-google",
+		 "gvfs-gphoto2", "gvfs-mtp", "gvfs-nfs", "gvfs-smb", "mousetweaks", "mutter", "nautilus", "networkmanager",
+		 "sushi", "tracker", "tracker-miners", "vino", "xdg-user-dirs-gtk", "yelp"]
 gnome_extra = ["gnome-initial-setup", "bijiben", "brasero", "cheese", "dconf-editor", "evolution", "file-roller",
 			   "gedit", "gedit-code-assistance", "gnome-calendar", "gnome-characters", "gnome-clocks",
 			   "gnome-color-manager", "gnome-documents", "gnome-getting-started-docs", "gnome-logs", "gnome-nettool",
 			   "gnome-photos", "gnome-todo", "gnome-tweak-tool", "gnome-weather", "nautilus-sendto", "polari", "rygel",
-			   "seahorse", "vinagre"]
+			   "vinagre"]
 
 added_menu_points = []
 
@@ -97,16 +97,16 @@ def print_menu_points(points, message):
 	for i in range(rows):
 		print("%i) %s" % (i + 1, points[i]), end="")
 		for j in columns:
-			if j > 0 and j * lines + i + 1 < length:
+			if j > 0 and j * lines + i < length:
 				print("%s %i) %s" % (
-					(lines - points[j * i].__len__()) * " ", j * lines + i + 1, points[j * lines + i + 1]), end="")
+					(26 - points[j * i].__len__()) * " " + "\t", j * lines + i + 1, points[j * lines + i]), end="")
 		print()
 
 
 def choose_options(menu_points):
 	choice = ask_for_choice(menu_points)
 
-	if choice > menu_points.__len__():
+	if choice > menu_points.__len__() or choice < 0:
 		print("No such option available.")
 		choose_options(menu_points)
 
@@ -119,11 +119,11 @@ def choose_options(menu_points):
 		add_programs([menu_points[choice]])
 
 	else:
-		print("%s already added!" % dev_tools[choice])
+		print("%s already added!" % menu_points[choice])
 		if ask_for_continue("Remove?", False):
-			print("Removing %s..." % dev_tools[choice])
-			added_menu_points.remove(dev_tools[choice])
-			remove_programs([dev_tools[choice]])
+			print("Removing %s..." % menu_points[choice])
+			added_menu_points.remove(menu_points[choice])
+			remove_programs([menu_points[choice]])
 
 	choose_options(menu_points)
 
