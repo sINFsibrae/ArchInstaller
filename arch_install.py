@@ -4,6 +4,7 @@
 import getopt
 import subprocess
 import sys
+import math
 
 # Settings
 install_path = None
@@ -66,7 +67,7 @@ def ask_for_choice(points):
 	is_valid = False
 	while not is_valid:
 		try:
-			choice = int(input("Enter choice [1-%i] : " % points.__len__())) - 1  # "- 1" -> zero based indexing
+			choice = int(input("Enter choice [1-{}] : ".format(points.__len__()))) - 1  # "- 1" -> zero based indexing
 			is_valid = True
 		except ValueError as e:
 			print("%s is not a valid integer." % e.args[0].split(": ")[1])
@@ -87,7 +88,7 @@ def print_menu_points(points, message):
 	print(message)
 	lines = 25
 	length = points.__len__()
-	columns = range(round(length / lines))
+	columns = range(math.ceil(length / lines))
 	if length <= lines:
 		rows = length
 	else:
