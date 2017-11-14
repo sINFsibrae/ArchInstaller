@@ -7,18 +7,22 @@ import signal
 import subprocess
 import sys
 
-# Settings
-install_path = None
-efi_install = False
-editor = None
-
 # Errors
 ERR_NO_INSTALL_PATH = 2
 ERR_SYS_NOT_EFI = 3
 ERR_WRONG_ARGUMENT_OPTION = 10
 ERR_PACSTRAP_FAILED = 11
+PROGRAM_TERMINATED = 20
+TERMINATED_BY_USER = 99
+UNKNOWN_ERROR = 100
 
-# Programs
+# Runtime variables
+configure_remote_help = False
+efi_install = False
+editor = None
+install_path = ""
+mounts = ""
+
 main_menu_points = ["Add WIFI", "Add Office", "Add Dev Tools", "Gnome", "Configure Remote Help", "DO IT!!!"]
 dev_tools = ["jdk8-openjdk", "jdk9-openjdk", "jdk", "jetbrains-toolbox"]
 
@@ -196,16 +200,17 @@ def choose_menu_options():
 		choose_menu_options()
 
 	elif choice == main_menu_points.index("Configure Remote Help"):
+		global configure_remote_help
 		if added_menu_points.count(main_menu_points[choice]) == 0:
 			print("Setting option configure Remote Help...")
 			added_menu_points.append(main_menu_points[choice])
-		# TODO
+			configure_remote_help = True
 
 		else:
 			print("Option configure Remote Help already set!")
 			if ask_for_continue("Remove?", False):
 				added_menu_points.remove(main_menu_points[choice])
-			# TODO
+				configure_remote_help = False
 
 		choose_menu_options()
 
@@ -229,29 +234,33 @@ def get_choice(prompt, choices):
 		return choices[choice]
 
 
-def run_command(command):
-	subprocess.call(command, shell=True)
+def run_command(command, is_visible):
+	if is_visible:
+		return subprocess.run(command, shell=True)
+	else:
+		return subprocess.run(command, stdout=subprocess.PIPE)
 
 
-def run_chroot_command(command):
-	run_command("chroot " + install_path + " " + command)
+def run_chroot_command(command, is_visible):
+	run_command("chroot " + install_path + " " + command, is_visible)
 
 
 def setup_chroot():
 	global mounts
-	run_command("mount proc {}/proc -t proc -o nosuid,noexec,nodev".format(install_path))
-	run_command("mount sys {}/sys -t sysfs -o nosuid,noexec,nodev,ro".format(install_path))
-	run_command("mount udev {}/dev -t devtmpfs -o mode=0755,nosuid".format(install_path))
-	run_command("mount devpts {}/dev/pts -t devpts -o mode=0620,gid=5,nosuid,noexec".format(install_path))
-	run_command("mount shm {}/dev/shm -t tmpfs -o mode=1777,nosuid,nodev".format(install_path))
-	run_command("mount run {}/run -t tmpfs -o nosuid,nodev,mode=0755".format(install_path))
-	run_command("mount tmp {}/tmp -t tmpfs -o mode=1777,strictatime,nodev,nosuid".format(install_path))
-	run_command("mount -B /etc/resolv.conf {}/etc/resolv.conf".format(install_path))
+	run_command("mount proc {}/proc -t proc -o nosuid,noexec,nodev".format(install_path), True)
+	run_command("mount sys {}/sys -t sysfs -o nosuid,noexec,nodev,ro".format(install_path), True)
+	run_command("mount udev {}/dev -t devtmpfs -o mode=0755,nosuid".format(install_path), True)
+	run_command("mount devpts {}/dev/pts -t devpts -o mode=0620,gid=5,nosuid,noexec".format(install_path), True)
+	run_command("mount shm {}/dev/shm -t tmpfs -o mode=1777,nosuid,nodev".format(install_path), True)
+	run_command("mount run {}/run -t tmpfs -o nosuid,nodev,mode=0755".format(install_path), True)
+	run_command("mount tmp {}/tmp -t tmpfs -o mode=1777,strictatime,nodev,nosuid".format(install_path), True)
+	run_command("mount -B /etc/resolv.conf {}/etc/resolv.conf".format(install_path), True)
 
 	mounts = "{0}/proc {0}/sys {0}/dev {0}/dev/pts {0}/dev/shm {0}/run {0}/tmp".format(install_path)
 
 	if efi_install:
-		run_command("mount efivars {}/sys/firmware/efi/efivars -t efivars -o nosuid,noexec,nodev".format(install_path))
+		run_command("mount efivars {}/sys/firmware/efi/efivars -t efivars -o nosuid,noexec,nodev".format(install_path),
+					True)
 		mounts += " {}/sys/firmware/efi/efivars".format(install_path)
 
 
@@ -259,72 +268,75 @@ def run_more_commands():
 	if ask_for_continue(
 			"Do you want to run custom commands before building the kernel?\nPress Ctrl+D to continue with installation.",
 			True):
-		run_command("/bin/zsh")
+		run_command("/bin/zsh", True)
 
 
 def install_bootloader():
-	command = "grub-install --target="
+	command = "grub-install "
 	if efi_install:
-		command.join("x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux")
+		command.join("--efi-directory=/boot/efi --bootloader-id=ArchLinux")
 	else:
-		command.join("i386-pc")
+		command.join("--target=i386-pc")
 
-	run_chroot_command(command)
-	run_chroot_command("grub-mkconfig -o /boot/grub/grub.cfg")
+	run_chroot_command(command, True)
+	run_chroot_command("grub-mkconfig -o /boot/grub/grub.cfg", True)
 
 
 def tear_down_chroot():
-	run_command("umount {}".format(mounts))
+	global mounts
+	run_command("umount {}".format(mounts), True)
+	mounts = ""
 
 
 def install():
 	print(2 * "\n" + "Installing...\n")
 
 	if efi_install:
-		if subprocess.run(["ls", "/sys/firmware/efi/efivars"], stdout=subprocess.PIPE).returncode != 0:
+		if run_command(["ls", "/sys/firmware/efi/efivars"], False).returncode != 0:
 			exit_with_message("System is not booted in EFI-mode!", ERR_SYS_NOT_EFI)
 
 	# run_command("dhcpcd")
 	# proc = subprocess.run("ping -c 4 google.de", stdout=subprocess.PIPE)
 
 	run_command(
-		"wget -O /tmp/mirrorlist 'https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4'")
-	run_command("sed -i \"s/^#Server/Server/\" /tmp/mirrorlist")
+		"wget -O /tmp/mirrorlist 'https://www.archlinux.org/mirrorlist/?country=DE&protocol=http&protocol=https&ip_version=4'",
+		True)
+	run_command("sed -i \"s/^#Server/Server/\" /tmp/mirrorlist", True)
 	print("Ranking mirrors...")
-	run_command("rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist")
-	if subprocess.run("pacstrap {} base base-devel vim".format(install_path), shell=True).returncode != 0:
+	run_command("rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist", True)
+	if run_command("pacstrap {} base base-devel vim".format(install_path), True).returncode != 0:
 		exit_with_message("pacstrap did not run correctly!", ERR_PACSTRAP_FAILED)
 
 	setup_chroot()
 
-	run_command("genfstab -U {0} >> {0}/etc/fstab".format(install_path))
+	run_command("genfstab -U {0} >> {0}/etc/fstab".format(install_path), True)
 
-	run_command("cp /etc/pacman.conf /tmp/")
+	run_command("cp /etc/pacman.conf /tmp/", True)
 	file = open("/tmp/pacman.conf", "a")
 	file.write("[archlinuxfr]\nSigLevel = Never\nServer = http://repo.archlinux.fr/$arch")
 	file.close()
 
-	run_command("pacman --config /tmp/pacman.conf --noconfirm -r {} -Sy yaourt".format(install_path))
+	run_command("pacman --config /tmp/pacman.conf --noconfirm -r {} -Sy yaourt".format(install_path), True)
 
 	programs = ""
 	for program in programs_to_install:
 		programs += " " + program
-	run_chroot_command("yaourt --noconfirm -Sy {}".format(programs))
+	run_chroot_command("yaourt --noconfirm -Sy {}".format(programs), True)
 
 	timezones = ["Europe/Berlin"]
 
 	localtime = get_choice("Select timezone:", timezones)
-	run_command("ln -sf /usr/share/zoneinfo/{} /etc/localtime".format(localtime))
+	run_command("ln -sf /usr/share/zoneinfo/{} /etc/localtime".format(localtime), True)
 
-	run_command("hwclock --localtime --systohc")
+	run_command("hwclock --localtime --systohc", True)
 
 	editors = ["vi", "vim", "nano"]
 	global editor
 	editor = get_choice("Select editor:", editors)
 
 	input('Uncomment needed localizations in /etc/locale.gen.. (Press "Enter")')
-	run_command(" {}/etc/locale.gen".format(editor + install_path))
-	run_command("locale-gen")
+	run_command("{} {}/etc/locale.gen".format(editor, install_path), True)
+	run_command("locale-gen", True)
 
 	user_input = input("Please insert localization:")
 	file = open(install_path + "/etc/locale.conf", "w")
@@ -344,14 +356,24 @@ def install():
 
 	run_more_commands()
 
-	run_chroot_command("mkinitcpio -p linux")
+	run_chroot_command("mkinitcpio -p linux", True)
 
 	install_bootloader()
 
 	print("Insert root password:")
-	run_chroot_command("passwd")
+	run_chroot_command("passwd", True)
 
-	run_command("sync")
+	if configure_remote_help:
+		pass
+	# TODO
+
+	if programs_to_install.count("gdm") != 0:
+		print("Enabling gdm...")
+		run_command("systemctl enable gdm", False)
+
+	if programs_to_install.count("networkmanager") != 0:
+		print("Enabling NetworkManager...")
+		run_command("systemctl enable NetworkManager", False)
 
 	tear_down_chroot()
 
@@ -367,8 +389,22 @@ def usage():
 	print("\nReport Bugs to <http://github.com/crapStone/ArchInstaller/issues>.")
 
 
+def signal_handler(signum, frame):
+	print(signum)
+	if signum == signal.SIGINT:
+		if mounts != "":
+			tear_down_chroot()
+		exit_with_message("Terminated by user", TERMINATED_BY_USER)
+
+
 def main():
-	subprocess.call("timedatectl set-ntp true", shell=True)
+	for signum in [signal.SIGINT]:
+		try:
+			signal.signal(signum, signal_handler)
+		except (OSError, RuntimeError):  # OSError for Python3, RuntimeError for 2
+			print("Skipping {}".format(signum))
+
+	run_command(["timedatectl", "set-ntp", "true"], False)
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "ehv", ["efi-install", "help", "version"])
 	except getopt.GetoptError as e:
