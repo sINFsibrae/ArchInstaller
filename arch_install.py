@@ -41,15 +41,15 @@ gnome_extra = ["gnome-initial-setup", "bijiben", "brasero", "cheese", "dconf-edi
 
 added_menu_points = []
 
-programs_to_install = ["tmux", "htop", "grub"]
+programs_to_install = ["grub", "htop", "tmux", "vim"]
 
 
-def exit_with_message(promt, status):
-	print(promt)
-	exit(status)
+def exit_with_message(prompt, status):
+	print(prompt)
+	exit_program(status)
 
 
-def exit(status):
+def exit_program(status):
 	sys.exit(status)
 
 
@@ -313,7 +313,7 @@ def install():
 	run_command("sed -i \"s/^#Server/Server/\" /tmp/mirrorlist", True)
 	print("Ranking mirrors...")
 	run_command("rankmirrors -n 16 /tmp/mirrorlist > /etc/pacman.d/mirrorlist", True)
-	if run_command("pacstrap {} base base-devel vim".format(install_path), True).returncode != 0:
+	if run_command("pacstrap {} base base-devel".format(install_path), True).returncode != 0:
 		exit_with_message("pacstrap did not run correctly!", ERR_PACSTRAP_FAILED)
 
 	setup_chroot()
@@ -419,14 +419,14 @@ def main():
 	except getopt.GetoptError as e:
 		print(str(e))
 		usage()
-		exit(ERR_WRONG_ARGUMENT_OPTION)
+		exit_program(ERR_WRONG_ARGUMENT_OPTION)
 
 	try:
 		args[0]
 	except IndexError as e:
 		print("Please specify installation-path!\n")
 		usage()
-		exit(ERR_NO_INSTALL_PATH)
+		exit_program(ERR_NO_INSTALL_PATH)
 
 	global install_path
 	install_path = args[0]
@@ -437,7 +437,7 @@ def main():
 
 		elif o in ("-h", "--help"):
 			usage()
-			exit(0)
+			exit_program(0)
 
 		elif o in ("-e", "--efi-install"):
 			global efi_install
