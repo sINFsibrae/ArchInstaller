@@ -70,12 +70,20 @@ def ask_for_continue(prompt, default_yes):
 
 def ask_for_choice(points):
 	is_valid = False
+	choice = []
 	while not is_valid:
 		try:
-			choice = int(input("Enter choice [1-{}] : ".format(points.__len__()))) - 1  # "- 1" -> zero based indexing
+			input_value = input("Enter choice [1-{}] : ".format(points.__len__())).split()
+			for s in input_value:
+				if s.count("-") != 0:
+					s = s.split("-")
+					for i in range(int(s[0]), int(s[1]) + 1):
+						choice.append(i - 1)
+				else:
+					choice.append(int(s) - 1)
 			is_valid = True
 		except ValueError as e:
-			print("%s is not a valid integer." % e.args[0].split(": ")[1])
+			print(e)
 	return choice
 
 
@@ -90,7 +98,7 @@ def remove_programs(programs_to_remove):
 
 
 def print_menu_points(points, message):
-	print(message)
+	print(3 * "\n" + message)
 	lines = 25
 	length = points.__len__()
 	columns = range(math.ceil(length / lines))
@@ -111,24 +119,25 @@ def print_menu_points(points, message):
 def choose_options(menu_points):
 	choice = ask_for_choice(menu_points)
 
-	if choice > menu_points.__len__() or choice < 0:
-		print("No such option available.")
-		choose_options(menu_points)
+	for i in choice:
+		if i > menu_points.__len__() or i < 0:
+			print("No such option available.")
+			choose_options(menu_points)
 
-	elif menu_points[choice] == "Back..":
-		return
+		elif menu_points[i] == "Back..":
+			return
 
-	elif added_menu_points.count(menu_points[choice]) == 0:
-		print("Adding %s..." % menu_points[choice])
-		added_menu_points.append(menu_points[choice])
-		add_programs([menu_points[choice]])
+		elif added_menu_points.count(menu_points[i]) == 0:
+			print("Adding %s..." % menu_points[i])
+			added_menu_points.append(menu_points[i])
+			add_programs([menu_points[i]])
 
-	else:
-		print("%s already added!" % menu_points[choice])
-		if ask_for_continue("Remove?", False):
-			print("Removing %s..." % menu_points[choice])
-			added_menu_points.remove(menu_points[choice])
-			remove_programs([menu_points[choice]])
+		else:
+			print("%s already added!" % menu_points[i])
+			if ask_for_continue("Remove?", False):
+				print("Removing %s..." % menu_points[i])
+				added_menu_points.remove(menu_points[i])
+				remove_programs([menu_points[i]])
 
 	choose_options(menu_points)
 
@@ -143,47 +152,47 @@ def option_menu(menu_points, prompt):
 def choose_menu_options():
 	choice = ask_for_choice(main_menu_points)
 
-	if choice == main_menu_points.index("Add WIFI"):
+	if choice[0] == main_menu_points.index("Add WIFI"):
 		wifi_tools = ["iw", "wireless_tools", "wpa_supplicant", "dialog"]
 
-		if added_menu_points.count(main_menu_points[choice]) == 0:
-			print("Adding %s..." % main_menu_points[choice])
-			added_menu_points.append(main_menu_points[choice])
+		if added_menu_points.count(main_menu_points[choice[0]]) == 0:
+			print("Adding %s..." % main_menu_points[choice[0]])
+			added_menu_points.append(main_menu_points[choice[0]])
 			add_programs(wifi_tools)
 
 		else:
-			print("%s already set!" % main_menu_points[choice])
+			print("%s already set!" % main_menu_points[choice[0]])
 			if ask_for_continue("Remove?", False):
-				print("Removing %s..." % main_menu_points[choice])
-				added_menu_points.remove(main_menu_points[choice])
+				print("Removing %s..." % main_menu_points[choice[0]])
+				added_menu_points.remove(main_menu_points[choice[0]])
 				remove_programs(wifi_tools)
 
 		choose_menu_options()
 
-	elif choice == main_menu_points.index("Add Office"):
+	elif choice[0] == main_menu_points.index("Add Office"):
 		office_programs = ["libreoffice-fresh", "libreoffice-fresh-de"]
 
-		if added_menu_points.count(main_menu_points[choice]) == 0:
-			print("Adding %s..." % main_menu_points[choice])
-			added_menu_points.append(main_menu_points[choice])
+		if added_menu_points.count(main_menu_points[choice[0]]) == 0:
+			print("Adding %s..." % main_menu_points[choice[0]])
+			added_menu_points.append(main_menu_points[choice[0]])
 			add_programs(office_programs)
 
 		else:
-			print("%s already set!" % main_menu_points[choice])
+			print("%s already set!" % main_menu_points[choice[0]])
 			if ask_for_continue("Remove?", False):
-				print("Removing %s..." % main_menu_points[choice])
-				added_menu_points.remove(main_menu_points[choice])
+				print("Removing %s..." % main_menu_points[choice[0]])
+				added_menu_points.remove(main_menu_points[choice[0]])
 				remove_programs(office_programs)
 
 		choose_menu_options()
 
-	elif choice == main_menu_points.index("Add Dev Tools"):
+	elif choice[0] == main_menu_points.index("Add Dev Tools"):
 		option_menu(dev_tools, "Dev Tools")
 
 		print_menu_points(main_menu_points, "Main Menu")
 		choose_menu_options()
 
-	elif choice == main_menu_points.index("Gnome"):
+	elif choice[0] == main_menu_points.index("Gnome"):
 		add_programs(gnome)
 		add_programs(gnome_extra)
 
@@ -193,28 +202,28 @@ def choose_menu_options():
 		for program in gnome_extra:
 			added_menu_points.append(program)
 
-		option_menu(gnome, "Gnome\nremove components")
-		option_menu(gnome_extra, "Gnome Extras\nremove components")
+		option_menu(gnome, "Gnome\n\n\nSelect components to remove:\n")
+		option_menu(gnome_extra, "Gnome Extras\n\n\nSelect components to remove:\n")
 
 		print_menu_points(main_menu_points, "Main Menu")
 		choose_menu_options()
 
-	elif choice == main_menu_points.index("Configure Remote Help"):
+	elif choice[0] == main_menu_points.index("Configure Remote Help"):
 		global configure_remote_help
-		if added_menu_points.count(main_menu_points[choice]) == 0:
+		if added_menu_points.count(main_menu_points[choice[0]]) == 0:
 			print("Setting option configure Remote Help...")
-			added_menu_points.append(main_menu_points[choice])
+			added_menu_points.append(main_menu_points[choice[0]])
 			configure_remote_help = True
 
 		else:
 			print("Option configure Remote Help already set!")
 			if ask_for_continue("Remove?", False):
-				added_menu_points.remove(main_menu_points[choice])
+				added_menu_points.remove(main_menu_points[choice[0]])
 				configure_remote_help = False
 
 		choose_menu_options()
 
-	elif choice == main_menu_points.index("DO IT!!!"):
+	elif choice[0] == main_menu_points.index("DO IT!!!"):
 		install()
 
 	else:
