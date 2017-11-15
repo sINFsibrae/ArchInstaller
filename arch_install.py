@@ -70,7 +70,7 @@ def ask_for_continue(prompt, default_yes):
 
 def ask_for_choice(points):
 	is_valid = False
-	choice = []
+	choices = []
 	while not is_valid:
 		try:
 			input_value = input("Enter choice [1-{}] : ".format(points.__len__())).split()
@@ -78,13 +78,13 @@ def ask_for_choice(points):
 				if s.count("-") != 0:
 					s = s.split("-")
 					for i in range(int(s[0]), int(s[1]) + 1):
-						choice.append(i - 1)
+						choices.append(i - 1)
 				else:
-					choice.append(int(s) - 1)
+					choices.append(int(s) - 1)
 			is_valid = True
 		except ValueError as e:
 			print(e)
-	return choice
+	return choices
 
 
 def add_programs(programs_to_add):
@@ -235,7 +235,7 @@ def get_choice(prompt, choices):
 	choices.append("Input own value..")
 
 	print_menu_points(choices, prompt)
-	choice = ask_for_choice(choices)
+	choice = ask_for_choice(choices)[0]
 
 	if choices[choice] == "Input own value..":
 		return input("Insert value")
