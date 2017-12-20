@@ -1,8 +1,8 @@
 # TODO
 
 - [ ] edit pacman.conf
-  * progress
-  * yaourt
+  - [ ] progress
+  - [ ] yaourt
 - [ ] remoteHelp
   * add to ssh config
   * add alias to bashrc
