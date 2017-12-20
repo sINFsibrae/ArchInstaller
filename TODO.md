@@ -4,6 +4,6 @@
   - [ ] progress
   - [ ] yaourt
 - [ ] remoteHelp
-  * add to ssh config
-  * add alias to bashrc
-  * generate keys
+  - [ ] add to ssh config
+  - [ ] add alias to bashrc
+  - [ ] generate keys
