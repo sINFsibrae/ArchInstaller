@@ -7,3 +7,19 @@
   - [ ] add to ssh config
   - [ ] add alias to bashrc
   - [ ] generate keys
+- [ ] partitioning tools
+  - [ ] custom mount points
+  - [ ] common filesystems
+  - [ ] lvm
+    - [ ] mkinitcpio.conf
+    - [ ] grub
+  - [ ] luks
+    - [ ] mkinitcpio.conf
+- [ ] grub configuration
+- [ ] graphics driver
+  - [ ] newest nvidia
+  - [ ] intel
+  - [ ] amd?
+  - [ ] bumblebee setup
+- [ ] plymouth
+- [ ] secure boot
