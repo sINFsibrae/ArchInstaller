@@ -1,5 +1,6 @@
 # TODO
 
+## High Priority
 - [ ] edit pacman.conf
   - [ ] progress
   - [ ] yaourt
@@ -7,6 +8,8 @@
   - [ ] add to ssh config
   - [ ] add alias to bashrc
   - [ ] generate keys
+
+## Medium Priority
 - [ ] partitioning tools
   - [ ] custom mount points
   - [ ] common filesystems
@@ -21,5 +24,7 @@
   - [ ] intel
   - [ ] amd?
   - [ ] bumblebee setup
+
+## Low Priority
 - [ ] plymouth
 - [ ] secure boot
