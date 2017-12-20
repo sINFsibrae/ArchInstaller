@@ -1,4 +1,4 @@
-#TODO
+# TODO
 
 - [ ] edit pacman.conf
   * progress
